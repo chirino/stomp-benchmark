@@ -12,5 +12,9 @@ class BenchmarkProject(info: ProjectInfo) extends DefaultProject(info) {
   lazy val hawtdispatch = "org.fusesource.hawtdispatch" % "hawtdispatch-scala" % "1.9"
   lazy val stompjms = "org.fusesource.stompjms" % "stompjms-client" % "1.9"
 
+  lazy val jackson_core_asl = "org.codehaus.jackson" % "jackson-core-asl" % "1.9.2"
+  lazy val jackson_mapper_asl = "org.codehaus.jackson" % "jackson-mapper-asl" % "1.9.2"
+  lazy val commons_math = "org.apache.commons" % "commons-math" % "2.2"
+
 }
 

@@ -31,7 +31,10 @@ import org.apache.felix.service.command.CommandSession
 import org.apache.felix.gogo.commands.{CommandException, Action, Option => option, Argument => argument, Command => command}
 
 import sun.misc.Signal;
-import sun.misc.SignalHandler;
+import sun.misc.SignalHandler
+import org.codehaus.jackson.map.ObjectMapper
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics
+;
 
 object Benchmark {
   def main(args: Array[String]):Unit = {
@@ -208,6 +211,9 @@ class Benchmark extends Action {
   var samples = HashMap[String, List[(Long,Long)]]()
   var benchmark_results = new BenchmarkResults()
 
+  @option(name = "--summerize", description = "Summerize the benchmark metrics in the existing data file instead of running the benchmark.")
+  var cl_summerize: Boolean = _
+  var summerize = FlexibleProperty(default = Some(false), high_priority = () => toBooleanOption(cl_summerize))
 
 
   def json_format(value:Option[List[String]]):String = {
@@ -254,7 +260,34 @@ class Benchmark extends Action {
   def execute(session: CommandSession): AnyRef = {
     
     FlexibleProperty.init_all()
-    
+
+    if( summerize.get ) {
+      //
+      // Loads and then displays the avg and stddev of the data in a benchmark file.
+      //
+      val mapper = new ObjectMapper()
+      val data = mapper.readValue(out.get, classOf[java.util.Map[String, Object]])
+      import collection.JavaConversions._
+
+      println("'%s','%s','%s'".format("Scenario", "Avg", "StdDev"))
+      for( (key, value) <- data ) {
+        if( key== "benchmark_settings" || key.startsWith("e_") ) {
+        } else {
+          value match {
+            case samples:java.util.List[Object] =>
+              val stats = new DescriptiveStatistics();
+              for( sample <- samples ) {
+                val v = sample.asInstanceOf[java.util.List[Object]].get(1).asInstanceOf[Number].doubleValue()
+                stats.addValue(v)
+              }
+              println("'%s',%f,%f".format(key, stats.getMean, stats.getStandardDeviation))
+            case _ =>
+          }
+        }
+      }
+      return null
+    }
+
     broker_name.set_default(out.get.getName.stripSuffix(".json"))
     
     // Protect against ctrl-c, write the results we have in any case
