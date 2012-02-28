@@ -269,7 +269,7 @@ class Benchmark extends Action {
       val data = mapper.readValue(out.get, classOf[java.util.Map[String, Object]])
       import collection.JavaConversions._
 
-      println("'%s','%s','%s'".format("Scenario", "Avg", "StdDev"))
+      println("%s,%s,%s".format("Scenario", "Avg", "StdDev"))
       for( (key, value) <- data ) {
         if( key== "benchmark_settings" || key.startsWith("e_") ) {
         } else {
@@ -280,7 +280,7 @@ class Benchmark extends Action {
                 val v = sample.asInstanceOf[java.util.List[Object]].get(1).asInstanceOf[Number].doubleValue()
                 stats.addValue(v)
               }
-              println("'%s',%f,%f".format(key, stats.getMean, stats.getStandardDeviation))
+              println("%s,%f,%f".format(key, stats.getMean, stats.getStandardDeviation))
             case _ =>
           }
         }
