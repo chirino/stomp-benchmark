@@ -13,45 +13,39 @@ ${ACTIVEMQ_DOWNLOAD:="http://archive.apache.org/dist/activemq/apache-activemq/${
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
 
-#
-# Install the apollo distro
-#
-ACTIVEMQ_HOME="${WORKSPACE}/apache-activemq-${ACTIVEMQ_VERSION}"
-if [ ! -d "${ACTIVEMQ_HOME}" ]; then
-  cd "${WORKSPACE}"
-  wget "$ACTIVEMQ_DOWNLOAD"
-  tar -zxvf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
-  rm -rf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
-fi
+function server_start() {
+	ACTIVEMQ_HOME="${WORKSPACE}/apache-activemq-${ACTIVEMQ_VERSION}"
+
+	if [ ! -d "${ACTIVEMQ_HOME}" ]; then
+	  cd "${WORKSPACE}"
+	  wget "$ACTIVEMQ_DOWNLOAD"
+	  tar -zxvf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
+	  rm -rf apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz
+	fi	
+
+	# Cleanup preious executions.
+	server_stop
+	rm -rf ${ACTIVEMQ_HOME}/data/*
+
+	#
+	# Configuration
+	export ACTIVEMQ_OPTS="-Xmx4G -Xms1G -Dorg.apache.activemq.UseDedicatedTaskRunner=true -Djava.util.logging.config.file=logging.properties"
+
+	CONSOLE_LOG="${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.log"
+	"${ACTIVEMQ_HOME}/bin/activemq" console "xbean:file:${ACTIVEMQ_HOME}/conf/activemq-stomp.xml" > "${CONSOLE_LOG}" 2>&1 &
+	ACTIVEMQ_PID=$!
+	echo "Started ActiveMQ with PID: ${ACTIVEMQ_PID}"
+	sleep 5
+	cat ${CONSOLE_LOG}
+}
+
+function benchmark_run() {
+	cd "${BASEDIR}"
+	"${WORKSPACE}/bin/sbt" run --host ${SERVER_HOST} "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
+	# Create a report.
+	"${BASEDIR}/bin/benchmark-report" $*
+}
+
+benchmark_main $*
 
 
-#
-# Cleanup preious executions.
-killall -9 java erl epmd apollo > /dev/null 2>&1
-rm -rf ${ACTIVEMQ_HOME}/data/*
-
-#
-# Configuration
-export ACTIVEMQ_OPTS="-Xmx4G -Xms1G -Dorg.apache.activemq.UseDedicatedTaskRunner=true -Djava.util.logging.config.file=logging.properties"
-
-#
-# Start the broker
-#
-CONSOLE_LOG="${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.log"
-"${ACTIVEMQ_HOME}/bin/activemq" console "xbean:file:${ACTIVEMQ_HOME}/conf/activemq-stomp.xml" > "${CONSOLE_LOG}" 2>&1 &
-ACTIVEMQ_PID=$!
-echo "Started ActiveMQ with PID: ${ACTIVEMQ_PID}"
-sleep 5
-cat ${CONSOLE_LOG}
-
-#
-# Run the benchmark
-#
-cd "${BASEDIR}"
-"${WORKSPACE}/bin/sbt" run "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json"
-
-# Kill the broker
-kill -9 ${ACTIVEMQ_PID}
-
-# Create a report.
-"${BASEDIR}/bin/benchmark-report" $*

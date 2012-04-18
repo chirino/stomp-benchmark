@@ -4,6 +4,7 @@ true \
 ${REPORTS_HOME:=$1} \
 ${REPORTS_HOME:=`pwd`/reports/`hostname`}
 WORKSPACE="${BASEDIR}/workspace"
+SCRIPT_NAME=`basename $0`
 
 mkdir -p ${WORKSPACE}
 mkdir -p ${REPORTS_HOME}
@@ -12,18 +13,48 @@ cd "${REPORTS_HOME}" ; REPORTS_HOME=`pwd` ; cd - > /dev/null
 #
 # Install SBT
 #
-if [ ! -f "${WORKSPACE}/bin/sbt" ] ; then
-  mkdir ~/.ivy2 2> /dev/null
-  mkdir "${WORKSPACE}/bin" 2> /dev/null
-  cd "${WORKSPACE}/bin"
-  wget http://simple-build-tool.googlecode.com/files/sbt-launch-0.7.4.jar
-  cat > ${WORKSPACE}/bin/sbt <<EOF
+function install_sbt() {
+
+	if [ ! -f "${WORKSPACE}/bin/sbt" ] ; then
+	  mkdir ~/.ivy2 2> /dev/null
+	  mkdir "${WORKSPACE}/bin" 2> /dev/null
+	  cd "${WORKSPACE}/bin"
+	  wget http://simple-build-tool.googlecode.com/files/sbt-launch-0.7.4.jar
+	  cat > ${WORKSPACE}/bin/sbt <<EOF
 #!/bin/sh
 java -server -Xmx2G -XX:MaxPermSize=500m -jar ${WORKSPACE}/bin/sbt-launch-0.7.4.jar "\$*"
 EOF
-  chmod a+x "${WORKSPACE}/bin/sbt"
-  cd "${BASEDIR}"
-  "${WORKSPACE}/bin/sbt" update
-fi
-
+	  chmod a+x "${WORKSPACE}/bin/sbt"
+	  cd "${BASEDIR}"
+	  "${WORKSPACE}/bin/sbt" update
+	fi
   
+}
+
+function server_stop() {
+	killall -9 java erl epmd apollo > /dev/null 2>&1
+}
+
+function benchmark_main() {
+	case $1 in
+		start) server_start ;;
+		stop) server_stop ;;
+		*)
+			install_sbt
+			if [ -z "$SERVER_ADDRESS" ] ; then
+				export SERVER_HOST="localhost"
+				server_start
+				#benchmark_run
+				server_stop
+			else
+				export SERVER_HOST=`echo ${SERVER_ADDRESS} | cut -d @ -f 2)`
+				ssh $SERVER_ADDRESS mkdir -p ./benchmark/bin
+				scp -r $SERVER_ADDRESS ${BASEDIR}/bin/ $SERVER_ADDRESS:./benchmark
+				ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} start
+				benchmark_run
+				ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} stop
+			fi
+		;;
+	esac
+
+}

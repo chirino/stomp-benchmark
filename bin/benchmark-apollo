@@ -15,51 +15,46 @@ ${APOLLO_DOWNLOAD:="http://www.apache.org/dist/activemq/activemq-apollo/${APOLLO
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
 
-#
-# Install the apollo distro
-#
-APOLLO_HOME="${WORKSPACE}/apache-apollo-${APOLLO_VERSION}"
-if [ ! -d "${APOLLO_HOME}" ]; then
-  cd ${WORKSPACE}
-  wget "$APOLLO_DOWNLOAD"
-  tar -zxvf apache-apollo-*.tar.gz
-  rm -rf apache-apollo-*.tar.gz
-fi
+function server_start() {
+	
+	APOLLO_HOME="${WORKSPACE}/apache-apollo-${APOLLO_VERSION}"
+	APOLLO_BASE="${WORKSPACE}/apollo-${APOLLO_VERSION}"
 
-APOLLO_BASE="${WORKSPACE}/apollo-${APOLLO_VERSION}"
-if [ ! -d "${APOLLO_BASE}" ]; then
-  cd "${WORKSPACE}"
-  "${APOLLO_HOME}/bin/apollo" create --with-ssl=false "apollo-${APOLLO_VERSION}"
-  perl -pi -e 's|<leveldb_store directory="\${apollo.base}/data"/>|<leveldb_store directory="\${apollo.base}/data" log_size="2G"/>|' "${WORKSPACE}/apollo-${APOLLO_VERSION}/etc/apollo.xml"
-fi
+	if [ ! -d "${APOLLO_HOME}" ]; then
+	  cd ${WORKSPACE}
+	  wget "$APOLLO_DOWNLOAD"
+	  tar -zxvf apache-apollo-*.tar.gz
+	  rm -rf apache-apollo-*.tar.gz
+	fi
 
-#
-# Cleanup preious executions.
-killall -9 java erl epmd apollo > /dev/null 2>&1
-rm -rf ${APOLLO_BASE}/data/* ${APOLLO_BASE}/tmp/* ${APOLLO_BASE}/log/*
+	if [ ! -d "${APOLLO_BASE}" ]; then
+	  cd "${WORKSPACE}"
+	  "${APOLLO_HOME}/bin/apollo" create --with-ssl=false "apollo-${APOLLO_VERSION}"
+	  perl -pi -e 's|<leveldb_store directory="\${apollo.base}/data"/>|<leveldb_store directory="\${apollo.base}/data" log_size="2G"/>|' "${WORKSPACE}/apollo-${APOLLO_VERSION}/etc/apollo.xml"
+	fi
 
-#
-# Configuration
-export APOLLO_ASSERTIONS="false"
-export JVM_FLAGS="-server -Xmx4G -Xms1G"
+	# Cleanup preious executions.
+	server_stop
+	rm -rf ${APOLLO_BASE}/data/* ${APOLLO_BASE}/tmp/* ${APOLLO_BASE}/log/*
 
-#
-# Start the server
-CONSOLE_LOG="${REPORTS_HOME}/apollo-${APOLLO_VERSION}.log"
-"${APOLLO_BASE}/bin/apollo-broker" run > "${CONSOLE_LOG}" 2>&1 &
-APOLLO_PID=$!
-echo "Started Apollo with PID: ${APOLLO_PID}"
-sleep 5
-cat "${CONSOLE_LOG}"
+	#
+	# Configuration
+	export APOLLO_ASSERTIONS="false"
+	export JVM_FLAGS="-server -Xmx4G -Xms1G"
 
-#
-# Run the benchmark
-cd ${BASEDIR}
-"${WORKSPACE}/bin/sbt" run --login admin --passcode password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}.json"
+	#
+	# Start the server
+	CONSOLE_LOG="${REPORTS_HOME}/apollo-${APOLLO_VERSION}.log"
+	"${APOLLO_BASE}/bin/apollo-broker" run > "${CONSOLE_LOG}" 2>&1 &
+	APOLLO_PID=$!
+	echo "Started Apollo with PID: ${APOLLO_PID}"
+	sleep 5
+	cat "${CONSOLE_LOG}"
+}
 
-#
-# Kill the server
-kill -9 ${APOLLO_PID}
-
-# Create a report.
-"${BASEDIR}/bin/benchmark-report" $*
+function benchmark_run() {
+	cd ${BASEDIR}
+	"${WORKSPACE}/bin/sbt" run --host ${SERVER_HOST} --login admin --passcode password "${REPORTS_HOME}/apollo-${APOLLO_VERSION}.json" 
+	# Create a report.
+	"${BASEDIR}/bin/benchmark-report" $*
+}
