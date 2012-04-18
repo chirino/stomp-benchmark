@@ -1,7 +1,6 @@
 #!/bin/bash
 
 true \
-${REPORTS_HOME:=$1} \
 ${REPORTS_HOME:=`pwd`/reports/`hostname`}
 WORKSPACE="${BASEDIR}/workspace"
 SCRIPT_NAME=`basename $0`
