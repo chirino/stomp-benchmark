@@ -6,9 +6,11 @@ ${REPORTS_HOME:=`pwd`/reports/`hostname`}
 WORKSPACE="${BASEDIR}/workspace"
 SCRIPT_NAME=`basename $0`
 
-mkdir -p ${WORKSPACE}
-mkdir -p ${REPORTS_HOME}
+mkdir -p "${WORKSPACE}"
+mkdir -p "${REPORTS_HOME}"
 cd "${REPORTS_HOME}" ; REPORTS_HOME=`pwd` ; cd - > /dev/null
+
+echo "WORKSPACE=${WORKSPACE} and REPORTS_HOME=${REPORTS_HOME}"
 
 #
 # Install SBT

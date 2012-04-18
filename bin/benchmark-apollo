@@ -58,3 +58,5 @@ function benchmark_run() {
 	# Create a report.
 	"${BASEDIR}/bin/benchmark-report" $*
 }
+
+benchmark_main $*
