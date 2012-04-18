@@ -41,7 +41,8 @@ function server_start() {
 
 function benchmark_run() {
 	cd "${BASEDIR}"
-	"${WORKSPACE}/bin/sbt" run --host ${SERVER_HOST} "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
+	echo "${WORKSPACE}/bin/sbt" run --host $1 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
+	"${WORKSPACE}/bin/sbt" run --host $1 "${REPORTS_HOME}/activemq-${ACTIVEMQ_VERSION}.json" 
 	# Create a report.
 	"${BASEDIR}/bin/benchmark-report" $*
 }

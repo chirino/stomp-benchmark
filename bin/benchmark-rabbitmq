@@ -84,7 +84,7 @@ function server_start() {
 
 function benchmark_run() {
   cd ${BASEDIR}
-  "${WORKSPACE}/bin/sbt" run --host ${SERVER_HOST} --login guest --passcode guest "${REPORTS_HOME}/rabbitmq-${RABBITMQ_VERSION}.json"
+  "${WORKSPACE}/bin/sbt" run --host $1 --login guest --passcode guest "${REPORTS_HOME}/rabbitmq-${RABBITMQ_VERSION}.json"
   # Create a report.
   "${BASEDIR}/bin/benchmark-report" $*
 }

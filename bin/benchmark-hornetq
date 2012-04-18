@@ -74,7 +74,7 @@ function server_start() {
 
 function benchmark_run() {
   cd ${BASEDIR}
-  "${WORKSPACE}/bin/sbt" run --host ${SERVER_HOST} --topic-prefix=jms.topic. --queue-prefix=jms.queue. "${REPORTS_HOME}/hornetq-${HORNETQ_VERSION}.json"
+  "${WORKSPACE}/bin/sbt" run --host $1 --topic-prefix=jms.topic. --queue-prefix=jms.queue. "${REPORTS_HOME}/hornetq-${HORNETQ_VERSION}.json"
   # Create a report.
   "${BASEDIR}/bin/benchmark-report" $*
 }

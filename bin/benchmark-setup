@@ -42,16 +42,14 @@ function benchmark_main() {
 		*)
 			install_sbt
 			if [ -z "$SERVER_ADDRESS" ] ; then
-				export SERVER_HOST="localhost"
 				server_start
-				#benchmark_run
+				benchmark_run localhost
 				server_stop
 			else
-				export SERVER_HOST=`echo ${SERVER_ADDRESS} | cut -d @ -f 2)`
 				ssh $SERVER_ADDRESS mkdir -p ./benchmark/bin
 				scp -r $SERVER_ADDRESS ${BASEDIR}/bin/ $SERVER_ADDRESS:./benchmark
 				ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} start
-				benchmark_run
+				benchmark_run `echo ${SERVER_ADDRESS} | cut -d @ -f 2`
 				ssh $SERVER_ADDRESS ./benchmark/bin/${SCRIPT_NAME} stop
 			fi
 		;;
