@@ -146,6 +146,9 @@ trait Scenario {
   var trust_managers:Array[TrustManager] = _
   var key_managers:Array[KeyManager] = _
 
+  var receive_buffer_size = 1024*64;
+  var send_buffer_size = 1024*64;
+
   def ssl_context:SSLContext = {
     Option(SslTransport.protocol(protocol)).map { protocol =>
       val rc = SSLContext.getInstance(protocol)

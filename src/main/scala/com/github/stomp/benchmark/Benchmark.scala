@@ -558,7 +558,7 @@ class Benchmark extends Action {
           scenario.persistent = false
           scenario.sync_send = false
           scenario.destination_count = 1
-          scenario.destination_type = "queue"
+          scenario.destination_type = "topic"
           scenario.consumers = 1
         }
       }

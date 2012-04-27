@@ -92,6 +92,8 @@ class NonBlockingScenario extends Scenario {
         stomp.setVersion("1.0")
         stomp.setSslContext(ssl_context)
         stomp.setHost(null) // RabbitMQ barfs if the host is set.
+        stomp.setReceiveBufferSize(receive_buffer_size)
+        stomp.setSendBufferSize(send_buffer_size)
         login.foreach(stomp.setLogin(_))
         passcode.foreach(stomp.setPasscode(_))
         stomp.connectCallback(new Callback[CallbackConnection](){
