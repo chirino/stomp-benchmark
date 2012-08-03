@@ -8,7 +8,7 @@
 #
 
 true \
-${APOLLO_VERSION:=1.2} \
+${APOLLO_VERSION:=1.3} \
 ${APOLLO_DOWNLOAD:="http://www.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
 #${APOLLO_DOWNLOAD:="http://archive.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
 

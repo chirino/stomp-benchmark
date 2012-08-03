@@ -8,8 +8,8 @@
 #
 
 true \
-${HORNETQ_VERSION:=2.2.5.Final} \
-${HORNETQ_DOWNLOAD:="http://downloads.jboss.org/hornetq/hornetq-${HORNETQ_VERSION}.tar.gz"}
+${HORNETQ_VERSION:=2.3.0.Alpha} \
+${HORNETQ_DOWNLOAD:="http://downloads.jboss.org/hornetq/hornetq-${HORNETQ_VERSION}-bin.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
@@ -21,7 +21,7 @@ function server_start() {
   
   if [ ! -d "${HORNETQ_HOME}" ]; then
     cd ${WORKSPACE}
-    wget "$HORNETQ_DOWNLOAD"
+    wget "$HORNETQ_DOWNLOAD" -O hornetq-${HORNETQ_VERSION}.tar.gz
     tar -zxvf hornetq-${HORNETQ_VERSION}.tar.gz
     rm -rf hornetq-${HORNETQ_VERSION}.tar.gz
     

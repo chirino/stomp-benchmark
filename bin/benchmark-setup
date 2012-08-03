@@ -33,7 +33,7 @@ EOF
 }
 
 function server_stop() {
-	killall -9 java erl epmd apollo > /dev/null 2>&1
+	killall -9 java erl epmd apollo beam.smp > /dev/null 2>&1
 }
 
 function benchmark_main() {
