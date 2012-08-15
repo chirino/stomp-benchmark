@@ -20,7 +20,7 @@ package com.github.stomp.benchmark
 import java.util.concurrent.atomic._
 import java.util.concurrent.TimeUnit._
 import scala.collection.mutable.ListBuffer
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.{Semaphore, ConcurrentLinkedQueue}
 import java.security.KeyStore
 import java.io.FileInputStream
 import javax.net.ssl._
@@ -79,7 +79,7 @@ trait Scenario {
 
   var producers = 1
   var producers_per_sample = 0
-  var connections_per_second = 100
+  var max_concurrent_connects = 100
 
   var consumers = 1
   var consumers_per_sample = 0
@@ -149,6 +149,8 @@ trait Scenario {
 
   var receive_buffer_size = 1024*64;
   var send_buffer_size = 1024*64;
+
+  var connect_semaphore = new AtomicInteger()
 
   def ssl_context:SSLContext = {
     Option(SslTransport.protocol(protocol)).map { protocol =>
@@ -433,35 +435,18 @@ trait Scenario {
     _message_size.init(now)
     _messages_per_connection.init(now)
 
-    var created_connections = 0
-    var allowed_connections = connections_per_second
-    def connection_wait_check = if( connections_per_second > 0 ) {
-      if( allowed_connections == 0 ) {
-        System.out.println("Started %d connections (pausing for 1 second)".format(created_connections))
-        Thread.sleep(1000)
-        allowed_connections = connections_per_second
-      }
-      allowed_connections -= 1
-      created_connections += 1
-    }
-
     for (i <- 0 until consumers) {
-      connection_wait_check
       val client = createConsumer(i)
       consumer_clients ::= client
       client.start()
     }
 
     for (i <- 0 until producers) {
-      connection_wait_check
       val client = createProducer(i)
       producer_clients ::= client
       client.start()
     }
 
-    if( created_connections > connections_per_second) {
-      System.out.println("All %d connections are now started".format(created_connections))
-    }
     try {
       func
     } finally {

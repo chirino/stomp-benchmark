@@ -27,8 +27,10 @@ import org.fusesource.stomp.client.Constants._
 import scala.collection.mutable.HashMap
 import org.fusesource.stomp.codec.StompFrame
 import java.net.URI
+import java.util.Random
 
-//object NonBlockingScenario {
+object NonBlockingScenario {
+  val random = new Random()
 //  def main(args:Array[String]):Unit = {
 //    val scenario = new com.github.stomp.benchmark.NonBlockingScenario
 //    scenario.login = Some("admin")
@@ -47,7 +49,7 @@ import java.net.URI
 //    scenario.consumers = 0
 //    scenario.run
 //  }
-//}
+}
 
 /**
  * <p>
@@ -86,31 +88,41 @@ class NonBlockingScenario extends Scenario {
 
     case class CONNECTING(host: String, port: Int, on_complete: ()=>Unit) extends State {
       
-      def connect() = {
-        val stomp = new Stomp(new URI(protocol+"://" + host + ":" + port))
-        stomp.setDispatchQueue(queue)
-        stomp.setVersion("1.0")
-        stomp.setSslContext(ssl_context)
-        stomp.setHost(null) // RabbitMQ barfs if the host is set.
-        stomp.setReceiveBufferSize(receive_buffer_size)
-        stomp.setSendBufferSize(send_buffer_size)
-        login.foreach(stomp.setLogin(_))
-        passcode.foreach(stomp.setPasscode(_))
-        stomp.connectCallback(new Callback[CallbackConnection](){
-          override def onSuccess(connection: CallbackConnection) {
-            state match {
-              case x:CONNECTING =>
-                state = CONNECTED(connection)
-                on_complete()
-                connection.resume()
-              case _ => 
-                connection.close(null)
+      def connect():Unit = {
+        if( connect_semaphore.getAndIncrement > max_concurrent_connects ) {
+          // too many concurrent connections... undo increment and try again later
+          connect_semaphore.decrementAndGet()
+          queue.after(NonBlockingScenario.random.nextInt(1000), TimeUnit.MILLISECONDS) {
+            connect()
+          }
+        } else {
+          val stomp = new Stomp(new URI(protocol+"://" + host + ":" + port))
+          stomp.setDispatchQueue(queue)
+          stomp.setVersion("1.0")
+          stomp.setSslContext(ssl_context)
+          stomp.setHost(null) // RabbitMQ barfs if the host is set.
+          stomp.setReceiveBufferSize(receive_buffer_size)
+          stomp.setSendBufferSize(send_buffer_size)
+          login.foreach(stomp.setLogin(_))
+          passcode.foreach(stomp.setPasscode(_))
+          stomp.connectCallback(new Callback[CallbackConnection](){
+            override def onSuccess(connection: CallbackConnection) {
+              connect_semaphore.decrementAndGet()
+              state match {
+                case x:CONNECTING =>
+                  state = CONNECTED(connection)
+                  on_complete()
+                  connection.resume()
+                case _ =>
+                  connection.close(null)
+              }
             }
-          }
-          override def onFailure(value: Throwable) {
-            on_failure(value)
-          }
-        })
+            override def onFailure(value: Throwable) {
+              connect_semaphore.decrementAndGet()
+              on_failure(value)
+            }
+          })
+        }
       }
 
       // We may need to delay the connection attempt.
@@ -263,7 +275,7 @@ class NonBlockingScenario extends Scenario {
     def on_receive(e:StompFrame) = {
     }
 
-    def connect(proc: =>Unit) = {
+    def connect(proc: =>Unit):Unit = {
       queue_check
       if( !done.get ) {
         open(host, port) {
