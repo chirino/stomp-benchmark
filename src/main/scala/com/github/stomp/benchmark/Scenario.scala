@@ -437,7 +437,7 @@ trait Scenario {
     var allowed_connections = connections_per_second
     def connection_wait_check = if( connections_per_second > 0 ) {
       if( allowed_connections == 0 ) {
-        System.out.println("Started %d connections (pausing for 1 second)", created_connections)
+        System.out.println("Started %d connections (pausing for 1 second)".format(created_connections))
         Thread.sleep(1000)
         allowed_connections = connections_per_second
       }
@@ -460,7 +460,7 @@ trait Scenario {
     }
 
     if( created_connections > connections_per_second) {
-      System.out.println("All %d connections are now starte", created_connections)
+      System.out.println("All %d connections are now started".format(created_connections))
     }
     try {
       func
