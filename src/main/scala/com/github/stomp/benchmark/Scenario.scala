@@ -79,6 +79,7 @@ trait Scenario {
 
   var producers = 1
   var producers_per_sample = 0
+  var connections_per_second = 100
 
   var consumers = 1
   var consumers_per_sample = 0
@@ -432,18 +433,35 @@ trait Scenario {
     _message_size.init(now)
     _messages_per_connection.init(now)
 
-    for (i <- 0 until producers) {
-      val client = createProducer(i)
-      producer_clients ::= client
-      client.start()
+    var created_connections = 0
+    var allowed_connections = connections_per_second
+    def connection_wait_check = if( connections_per_second > 0 ) {
+      if( allowed_connections == 0 ) {
+        System.out.println("Started %d connections (pausing for 1 second)", created_connections)
+        Thread.sleep(1000)
+        allowed_connections = connections_per_second
+      }
+      allowed_connections -= 1
+      created_connections += 1
     }
 
     for (i <- 0 until consumers) {
+      connection_wait_check
       val client = createConsumer(i)
       consumer_clients ::= client
       client.start()
     }
 
+    for (i <- 0 until producers) {
+      connection_wait_check
+      val client = createProducer(i)
+      producer_clients ::= client
+      client.start()
+    }
+
+    if( created_connections > connections_per_second) {
+      System.out.println("All %d connections are now starte", created_connections)
+    }
     try {
       func
     } finally {

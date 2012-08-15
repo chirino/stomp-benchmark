@@ -742,6 +742,7 @@ class Benchmark extends Action {
 
     var ack = FlexibleProperty[String]()
     
+    var connections_per_second = FlexibleProperty[Int]()
     var producers_per_sample = FlexibleProperty[Int]()
     var consumers_per_sample = FlexibleProperty[Int]()
 
@@ -881,6 +882,7 @@ class Benchmark extends Action {
       durable.push(getBooleanValue("durable", node, vars))
       sync_send.push(getBooleanValue("sync_send", node, vars))
       ack.push(getStringValue("ack", node, vars))
+      connections_per_second.push(getIntValue("connections_per_second", node, vars))
       producers_per_sample.push(getIntValue("producers_per_sample", node, vars))
       consumers_per_sample.push(getIntValue("consumers_per_sample", node, vars))
       
@@ -921,6 +923,7 @@ class Benchmark extends Action {
       sync_send.pop()
       ack.pop()
       messages_per_connection.pop()
+      connections_per_second.pop()
       producers_per_sample.pop()
       consumers_per_sample.pop()
       
@@ -1074,6 +1077,7 @@ class Benchmark extends Action {
               scenario.durable = durable.getOrElse(scenario.durable)
               scenario.sync_send = sync_send.getOrElse(scenario.sync_send)
               scenario.ack = ack.getOrElse(scenario.ack)
+              scenario.connections_per_second = connections_per_second.getOrElse(scenario.connections_per_second)
               scenario.producers_per_sample = producers_per_sample.getOrElse(scenario.producers_per_sample)
               scenario.consumers_per_sample = consumers_per_sample.getOrElse(scenario.consumers_per_sample)
               
