@@ -24,13 +24,12 @@ import org.fusesource.hawtbuf.AsciiBuffer
 import org.fusesource.hawtbuf.Buffer._
 import org.fusesource.stomp.client._
 import org.fusesource.stomp.client.Constants._
-import scala.collection.mutable.HashMap
+import collection.mutable.{ListBuffer, HashMap}
 import org.fusesource.stomp.codec.StompFrame
 import java.net.URI
 import java.util.Random
 
-object NonBlockingScenario {
-  val random = new Random()
+//object NonBlockingScenario {
 //  def main(args:Array[String]):Unit = {
 //    val scenario = new com.github.stomp.benchmark.NonBlockingScenario
 //    scenario.login = Some("admin")
@@ -49,7 +48,7 @@ object NonBlockingScenario {
 //    scenario.consumers = 0
 //    scenario.run
 //  }
-}
+//}
 
 /**
  * <p>
@@ -59,6 +58,30 @@ object NonBlockingScenario {
  * @author <a href="http://hiramchirino.com">Hiram Chirino</a>
  */
 class NonBlockingScenario extends Scenario {
+
+  var current_connects = 0
+  val scenario_queue = createQueue("scenario_queue")
+  val pending_connects = ListBuffer[()=>Unit]()
+
+
+  private def kick_off_next_connect = {
+    while(!pending_connects.isEmpty && current_connects < max_concurrent_connects) {
+      val fun = pending_connects.remove(0)
+      current_connects += 1
+      fun()
+    }
+  }
+
+  private def connecting_start(fun : =>Unit) = scenario_queue {
+    pending_connects.append(fun _)
+    kick_off_next_connect
+  }
+
+  private def connecting_end = scenario_queue {
+    current_connects -= 1
+    kick_off_next_connect
+  }
+
 
   def createProducer(i:Int) = {
     if(this.request_response) {
@@ -89,13 +112,7 @@ class NonBlockingScenario extends Scenario {
     case class CONNECTING(host: String, port: Int, on_complete: ()=>Unit) extends State {
       
       def connect():Unit = {
-        if( connect_semaphore.getAndIncrement > max_concurrent_connects ) {
-          // too many concurrent connections... undo increment and try again later
-          connect_semaphore.decrementAndGet()
-          queue.after(NonBlockingScenario.random.nextInt(1000), TimeUnit.MILLISECONDS) {
-            connect()
-          }
-        } else {
+        connecting_start { queue {
           val stomp = new Stomp(new URI(protocol+"://" + host + ":" + port))
           stomp.setDispatchQueue(queue)
           stomp.setVersion("1.0")
@@ -107,7 +124,7 @@ class NonBlockingScenario extends Scenario {
           passcode.foreach(stomp.setPasscode(_))
           stomp.connectCallback(new Callback[CallbackConnection](){
             override def onSuccess(connection: CallbackConnection) {
-              connect_semaphore.decrementAndGet()
+              connecting_end
               state match {
                 case x:CONNECTING =>
                   state = CONNECTED(connection)
@@ -118,11 +135,11 @@ class NonBlockingScenario extends Scenario {
               }
             }
             override def onFailure(value: Throwable) {
-              connect_semaphore.decrementAndGet()
+              connecting_end
               on_failure(value)
             }
           })
-        }
+        }}
       }
 
       // We may need to delay the connection attempt.

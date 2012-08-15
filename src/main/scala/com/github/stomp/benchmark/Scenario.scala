@@ -150,8 +150,6 @@ trait Scenario {
   var receive_buffer_size = 1024*64;
   var send_buffer_size = 1024*64;
 
-  var connect_semaphore = new AtomicInteger()
-
   def ssl_context:SSLContext = {
     Option(SslTransport.protocol(protocol)).map { protocol =>
       val rc = SSLContext.getInstance(protocol)
