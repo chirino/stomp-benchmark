@@ -8,9 +8,9 @@
 #
 
 true \
-${APOLLO_VERSION:=1.3} \
-${APOLLO_DOWNLOAD:="http://www.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
-#${APOLLO_DOWNLOAD:="http://archive.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
+${APOLLO_VERSION:=1.4} \
+${APOLLO_DOWNLOAD:="http://archive.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
+#${APOLLO_DOWNLOAD:="http://www.apache.org/dist/activemq/activemq-apollo/${APOLLO_VERSION}/apache-apollo-${APOLLO_VERSION}-unix-distro.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
 . ${BASEDIR}/bin/benchmark-setup
@@ -22,9 +22,9 @@ function server_start() {
 
 	if [ ! -d "${APOLLO_HOME}" ]; then
 	  cd ${WORKSPACE}
-	  wget "$APOLLO_DOWNLOAD"
-	  tar -zxvf apache-apollo-*.tar.gz
-	  rm -rf apache-apollo-*.tar.gz
+	  wget "$APOLLO_DOWNLOAD" -O "apache-apollo-${APOLLO_VERSION}.tar.gz"
+	  tar -zxvf "apache-apollo-${APOLLO_VERSION}.tar.gz"
+	  rm -rf "apache-apollo-${APOLLO_VERSION}.tar.gz"
 	fi
 
 	if [ ! -d "${APOLLO_BASE}" ]; then
