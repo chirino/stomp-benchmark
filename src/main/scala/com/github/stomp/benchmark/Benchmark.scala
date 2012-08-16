@@ -34,10 +34,18 @@ import sun.misc.Signal;
 import sun.misc.SignalHandler
 import org.codehaus.jackson.map.ObjectMapper
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics
-;
+import java.lang.Thread.UncaughtExceptionHandler
 
 object Benchmark {
   def main(args: Array[String]):Unit = {
+
+    val exception_handler = new UncaughtExceptionHandler {
+      def uncaughtException(t: Thread, error: Throwable) {
+        error.printStackTrace()
+      }
+    }
+    Thread.setDefaultUncaughtExceptionHandler(exception_handler)
+
     val session = new CommandSession {
       def getKeyboard = System.in
       def getConsole = System.out
