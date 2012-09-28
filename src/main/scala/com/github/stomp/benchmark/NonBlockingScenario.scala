@@ -443,15 +443,20 @@ class NonBlockingScenario extends Scenario {
     }
 
 
+    var pending_acks = 0
+    val max_pending_acks = 1
+
     override def on_receive(msg: StompFrame) = {
       if( consumer_sleep != 0 && ((consumer_counter.get()%consumer_sleep_modulo) == 0)) {
-        if( !clientAck ) {
+        pending_acks += 1
+        if( !clientAck || pending_acks > max_pending_acks ) {
           receive_suspend
         }
         queue.after(math.abs(consumer_sleep), TimeUnit.MILLISECONDS) {
-          if( !clientAck ) {
+          if( !clientAck || pending_acks > max_pending_acks) {
             receive_resume
           }
+          pending_acks -= 1
           process_message(msg)
         }
       } else {
