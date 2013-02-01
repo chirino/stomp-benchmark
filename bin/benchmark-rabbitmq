@@ -7,7 +7,7 @@
 # [2]: http://www.rabbitmq.com/
 #
 true \
-${RABBITMQ_VERSION:=2.8.5} \
+${RABBITMQ_VERSION:=3.0.2} \
 ${RABBITMQ_DOWNLOAD:="http://www.rabbitmq.com/releases/rabbitmq-server/v${RABBITMQ_VERSION}/rabbitmq-server-generic-unix-${RABBITMQ_VERSION}.tar.gz"}
 
 BASEDIR=`dirname "$0"`/.. ; cd "${BASEDIR}" ; BASEDIR=`pwd` ; cd - > /dev/null
