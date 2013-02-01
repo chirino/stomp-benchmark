@@ -44,7 +44,7 @@ the following commands on the instance:
 
     sudo yum install -y screen
     curl https://nodeload.github.com/chirino/stomp-benchmark/zip/master > stomp-benchmark.zip
-    jar -xvf stomp-benchmark.zip 
+    unzip stomp-benchmark.zip 
     chmod a+x ./stomp-benchmark-master/bin/*
     screen ./stomp-benchmark-master/bin/benchmark-all
 
