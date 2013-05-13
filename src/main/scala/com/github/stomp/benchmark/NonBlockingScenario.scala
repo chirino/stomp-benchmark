@@ -177,10 +177,7 @@ class NonBlockingScenario extends Scenario {
       })
 
       def close() = {
-        state = CLOSING()
-        connection.close(^{
-          state = DISCONNECTED()
-        })
+        state = CLOSING(connection)
       }
 
       def on_failure(e:Throwable) = {
@@ -193,7 +190,40 @@ class NonBlockingScenario extends Scenario {
       }
 
     }
-    case class CLOSING() extends State
+
+    case class CLOSING(val connection:CallbackConnection) extends State {
+
+      var connectionClosing = false
+
+      // Lets try to request a clean DISCONNECT before we close the socket.
+      if( connection.transport().isConnected ) {
+        connection.request(new StompFrame(DISCONNECT), new Callback[StompFrame](){
+          override def onFailure(value: Throwable) = {
+            done
+          }
+          override def onSuccess(value: StompFrame) = {
+            done
+          }
+        })
+
+        // We give up waiting for the disconnect after 3 seconds.
+        queue.after(3, TimeUnit.SECONDS) {
+          done
+        }
+      } else {
+        done
+      }
+
+      // Clean up the connection, and go to the disconnected state.
+      def done = {
+        if( !connectionClosing ) {
+          connectionClosing = true
+          connection.close(^{
+            state = DISCONNECTED()
+          })
+        }
+      }
+    }
 
     case class DISCONNECTED() extends State {
       queue {
